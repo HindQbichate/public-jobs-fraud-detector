@@ -156,12 +156,12 @@ def generate_realistic_dataset_with_fraud_mix(n_samples=500, fraud_ratio=0.3):
     return df
 
 
-# ✅ Generate the dataset
+#Generate the dataset
 df = generate_realistic_dataset_with_fraud_mix(10000)
 
-# ✅ Save to CSV
+#Save to CSV
 df.to_csv("road_contractor_applications_rounded_clean.csv", index=False)
 
-# ✅ Check the fraud distribution and preview
+#Check the fraud distribution and preview
 print(df['is_fraudulent'].value_counts())
 print(df.head())
