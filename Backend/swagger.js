@@ -8,7 +8,16 @@ const options = {
       version: '1.0.0',
       description: 'Detect fraud in public road proposals using AI',
     },
+
+    // ✅ Global JWT Security Definition
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
       schemas: {
         PredictionInput: {
           type: 'object',
@@ -49,9 +58,18 @@ const options = {
           ]
         }
       }
-    }
+    },
+
+    // ✅ Apply bearerAuth to all routes by default
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ['./routes/*.js'],
+
+  apis: ['./routes/*.js'], // Swagger will parse these files for docs
 };
 
 module.exports = swaggerJSDoc(options);
+ 

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { predictFraud } = require('../controllers/predictionController');
-
+const predictionController = require('../controllers/predictionController');
+const { authenticateToken } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * /api/predict:
+ * /api/predictions/predict:
  *   post:
  *     summary: Send a road project proposal to AI for fraud detection
  *     tags: [Prediction]
@@ -80,7 +80,150 @@ const { predictFraud } = require('../controllers/predictionController');
  *         description: Timeout
  */
 
+router.post('/predict', authenticateToken, predictionController.predictFraud);
 
-router.post('/predict', predictFraud);
+
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Prediction:
+ *       type: object
+ *       required:
+ *         - application_id
+ *         - prediction
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Auto-generated ID
+ *         application_id:
+ *           type: integer
+ *           description: FK to the related application
+ *         prediction:
+ *           type: boolean
+ *           description: true = fraud, false = not fraud
+ *         result:
+ *           type: string
+ *           description: Optional explanation or model output
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/predictions:
+ *   post:
+ *     summary: Create a prediction manually
+ *     tags: [Predictions]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Prediction'
+ *     responses:
+ *       201:
+ *         description: Prediction created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Prediction'
+ *       400:
+ *         description: Invalid input
+ */
+router.post('/', authenticateToken, predictionController.createPrediction);
+
+/**
+ * @swagger
+ * /api/predictions:
+ *   get:
+ *     summary: Get all prediction records
+ *     tags: [Predictions]
+ *     responses:
+ *       200:
+ *         description: List of predictions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Prediction'
+ */
+router.get('/', authenticateToken, predictionController.getAllPredictions);
+
+/**
+ * @swagger
+ * /api/predictions/{id}:
+ *   get:
+ *     summary: Get a prediction by ID
+ *     tags: [Predictions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Prediction ID
+ *     responses:
+ *       200:
+ *         description: Prediction found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Prediction'
+ *       404:
+ *         description: Prediction not found
+ */
+router.get('/:id', authenticateToken, predictionController.getPredictionById);
+
+/**
+ * @swagger
+ * /api/predictions/{id}:
+ *   put:
+ *     summary: Update a prediction
+ *     tags: [Predictions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Prediction ID
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Prediction'
+ *     responses:
+ *       200:
+ *         description: Prediction updated
+ *       404:
+ *         description: Prediction not found
+ */
+router.put('/:id', authenticateToken, predictionController.updatePrediction);
+
+/**
+ * @swagger
+ * /api/predictions/{id}:
+ *   delete:
+ *     summary: Delete a prediction
+ *     tags: [Predictions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Prediction ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Prediction deleted
+ *       404:
+ *         description: Prediction not found
+ */
+router.delete('/:id', authenticateToken, predictionController.deletePrediction);
 
 module.exports = router;
