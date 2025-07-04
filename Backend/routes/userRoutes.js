@@ -3,6 +3,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 
+
+
+
 /**
  * @swagger
  * /api/users:
@@ -14,6 +17,7 @@ const { authenticateToken } = require('../middlewares/authMiddleware');
  *         description: List of users
  */
 router.get('/', authenticateToken, userController.getAllUsers);
+router.post('/', authenticateToken, userController.createUser);
 
 /**
  * @swagger

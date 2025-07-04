@@ -6,6 +6,11 @@ const swaggerSpec = require('./swagger');
 const routes = require('./routes');
 const db = require('./models');
 const { startConsumer } = require('./kafka/kafkaResponseConsumer');
+const cors = require("cors");
+app.use(cors({
+  origin: "http://localhost:5173", // your Vite frontend
+  credentials: true // if you're sending cookies or auth headers
+}));
 
 app.use(express.json());
 
