@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import Button from "./ui/button/Button";
 
 interface ModalProps {
   isOpen: boolean;
@@ -27,12 +28,13 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
             <div className="flex justify-end gap-3">{footer}</div>
           ) : (
             <div className="flex justify-end">
-              <button
+              <Button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                size="md"
+                variant="outline"
               >
-                Fermer
-              </button>
+                Annuler
+              </Button>
             </div>
           )}
         </div>

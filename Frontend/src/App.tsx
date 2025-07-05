@@ -19,6 +19,7 @@ import AppLayout from "./layout/AppLayout";
 import Home from "./pages/Dashboard/Home";
 import PrivateRoute from "./routes/PrivateRoute";
 import Users from "./pages/Users"
+import Applications from "./pages/Applications"
 
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
           <Route index path="/" element={<Home />} />
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/applications" element={<Applications />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/blank" element={<Blank />} />
           <Route path="/form-elements" element={<FormElements />} />

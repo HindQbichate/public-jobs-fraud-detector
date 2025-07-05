@@ -50,10 +50,10 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <BoxCubeIcon />,
-    name: "Postulations",
+    name: "Condidature",
     subItems: [
-      { name: "Importer postulations", path: "/applications/import", pro: false },
-      { name: "Consulter détails", path: "/applications/details", pro: false },
+      { name: "Voir les condidature", path: "/applications/", pro: false },
+      { name: "Consulter détails", path: "/applications/", pro: false },
     ],
   },
   {
