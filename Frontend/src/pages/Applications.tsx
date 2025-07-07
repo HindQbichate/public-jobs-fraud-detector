@@ -27,7 +27,6 @@ export default function Applications() {
 
   return (
     <>
-      <PageMeta title="Applications" description={""} />
       <div className="mx-auto max-w-screen-xl px-4 py-8">
         <PageBreadcrumb
           pageName="Applications"

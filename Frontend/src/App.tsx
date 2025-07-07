@@ -20,11 +20,18 @@ import Home from "./pages/Dashboard/Home";
 import PrivateRoute from "./routes/PrivateRoute";
 import Users from "./pages/Users"
 import Applications from "./pages/Applications"
+import Predictions from "./pages/Predictions";
+import PageMeta from "./components/common/PageMeta";
 
 
 export default function App() {
   return (
     <>
+
+      <PageMeta
+        title="You know"
+        description="This is React.js Blank Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+      />
       <Routes>
         {/* Layout protégé */}
         <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
@@ -32,6 +39,7 @@ export default function App() {
           <Route path="/profile" element={<UserProfiles />} />
           <Route path="/users" element={<Users />} />
           <Route path="/applications" element={<Applications />} />
+          <Route path="/predictions" element={<Predictions />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/blank" element={<Blank />} />
           <Route path="/form-elements" element={<FormElements />} />

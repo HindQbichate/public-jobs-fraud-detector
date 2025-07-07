@@ -53,13 +53,12 @@ const othersItems: NavItem[] = [
     name: "Condidature",
     subItems: [
       { name: "Voir les condidature", path: "/applications/", pro: false },
-      { name: "Consulter détails", path: "/applications/", pro: false },
     ],
   },
   {
     icon: <PieChartIcon />,
     name: "Prédictions",
-    subItems: [{ name: "Lancer prédiction", path: "/predictions", pro: false }],
+    subItems: [{ name: "Historique des prédictions", path: "/predictions", pro: false }],
   },
   {
     icon: <CalenderIcon />,

@@ -7,6 +7,70 @@ const {
   Application
 } = require('./models');
 
+// Moroccan data
+const MOROCCAN_REGIONS = [
+  'Casablanca-Settat', 'Rabat-Salé-Kénitra', 'Marrakech-Safi', 
+  'Tanger-Tétouan-Al Hoceïma', 'Fès-Meknès', 'Béni Mellal-Khénifra',
+  'Souss-Massa', 'Oriental', 'Drâa-Tafilalet', 'Laâyoune-Sakia El Hamra',
+  'Guelmim-Oued Noun', 'Dakhla-Oued Ed-Dahab'
+];
+
+const MOROCCAN_CITIES = {
+  'Casablanca-Settat': ['Casablanca', 'Mohammedia', 'Settat', 'El Jadida', 'Benslimane'],
+  'Rabat-Salé-Kénitra': ['Rabat', 'Salé', 'Kénitra', 'Témara', 'Skhirat'],
+  'Marrakech-Safi': ['Marrakech', 'Safi', 'Essaouira', 'El Kelaa des Sraghna', 'Youssoufia'],
+  'Tanger-Tétouan-Al Hoceïma': ['Tanger', 'Tétouan', 'Al Hoceïma', 'Larache', 'Fnideq'],
+  'Fès-Meknès': ['Fès', 'Meknès', 'Ifrane', 'Sefrou', 'Taza'],
+  'Béni Mellal-Khénifra': ['Béni Mellal', 'Khénifra', 'Khouribga', 'Fquih Ben Salah', 'Azilal'],
+  'Souss-Massa': ['Agadir', 'Taroudant', 'Tiznit', 'Oulad Teima', 'Tata'],
+  'Oriental': ['Oujda', 'Nador', 'Berkane', 'Taourirt', 'Jerada'],
+  'Drâa-Tafilalet': ['Errachidia', 'Ouarzazate', 'Tinghir', 'Zagora', 'Midelt'],
+  'Laâyoune-Sakia El Hamra': ['Laâyoune', 'Boujdour', 'Tarfaya', 'Es-Semara'],
+  'Guelmim-Oued Noun': ['Guelmim', 'Sidi Ifni', 'Tan-Tan', 'Assa'],
+  'Dakhla-Oued Ed-Dahab': ['Dakhla', 'Aousserd']
+};
+
+const MOROCCAN_COMPANY_NAMES = [
+  'Groupe OCP', 'Maroc Telecom', 'Attijariwafa Bank', 'ONEE', 'Royal Air Maroc',
+  'Yazaki Maroc', 'SOMED', 'Managem', 'Cosumar', 'Saham Assurance',
+  'Afriquia Gaz', 'Marjane Holding', 'BMCE Bank', 'Risma', 'Label Vie',
+  'Auto Nejma', 'SODEP-Marsa Maroc', 'Sonasid', 'Lesieur Cristal', 'Delattre Levivier Maroc'
+];
+
+function roundBudgetRealistically(value) {
+  const base = Math.floor(value / 1000000) * 1000000;
+  const remainder = value % 1000000;
+
+  if (remainder < 250000) {
+    return base;
+  } else if (remainder < 750000) {
+    return base + 500000;
+  } else {
+    return base + 1000000;
+  }
+}
+
+const terrainMultipliers = {
+  "Flat": 1.0,
+  "Mixed": 1.1,
+  "Coastal": 1.15,
+  "Mountainous": 1.3,
+  "Desert": 1.05
+};
+
+const slopeMultipliers = {
+  "Low": 1.0,
+  "Moderate": 1.1,
+  "High": 1.25
+};
+
+const baseCostPerLane = {
+  "Autoroute": [1200000, 1500000],
+  "National": [800000, 1200000],
+  "Regional": [500000, 800000],
+  "Provincial": [300000, 600000]
+};
+
 async function seed() {
   try {
     await sequelize.sync({ force: true }); // WARNING: Wipes all data
@@ -15,7 +79,7 @@ async function seed() {
     const users = [];
     for (let i = 0; i < 5; i++) {
       const user = await User.create({
-        fullName: faker.name.findName(),
+        fullName: `${faker.name.firstName()} ${faker.name.lastName()}`,
         email: faker.internet.email(),
         password: faker.internet.password(),
         role: 'contractor'
@@ -26,79 +90,158 @@ async function seed() {
 
     // --- Seed Companies ---
     const companies = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
+      const isLarge = faker.datatype.boolean(0.3);
+      
+      let experience, similarProjects, employees, engineers, machinery;
+      
+      if (isLarge) {
+        experience = faker.datatype.number({ min: 10, max: 30 });
+        similarProjects = faker.datatype.number({ min: 5, max: 20 });
+        employees = faker.datatype.number({ min: 200, max: 1000 });
+        engineers = faker.datatype.number({ min: 5, max: employees / 20 });
+        machinery = faker.datatype.number({ min: 10, max: employees / 10 });
+      } else {
+        experience = faker.datatype.number({ min: 1, max: 10 });
+        similarProjects = faker.datatype.number({ min: 0, max: 5 });
+        employees = faker.datatype.number({ min: 30, max: 200 });
+        engineers = faker.datatype.number({ min: 1, max: 5 });
+        machinery = faker.datatype.number({ min: 3, max: 10 });
+      }
+
       const company = await Company.create({
-        name: faker.company.companyName(),
-        foundation_date: faker.date.past(20),
-        previous_similar_projects: faker.datatype.number({ min: 0, max: 20 }),
-        total_employees: faker.datatype.number({ min: 5, max: 300 }),
-        engineers_count: faker.datatype.number({ min: 1, max: 50 }),
-        machinery_count: faker.datatype.number({ min: 1, max: 100 }),
-        compliance_issues_count: faker.datatype.number({ min: 0, max: 10 }),
+        name: i < MOROCCAN_COMPANY_NAMES.length 
+          ? MOROCCAN_COMPANY_NAMES[i] 
+          : `${faker.company.companyName()} Maroc`,
+        foundation_date: faker.date.past(experience),
+        previous_similar_projects: similarProjects,
+        total_employees: employees,
+        engineers_count: engineers,
+        machinery_count: machinery,
+        compliance_issues_count: faker.datatype.number({ min: 0, max: 2 })
       });
       companies.push(company);
     }
     console.log(`✅ Seeded ${companies.length} companies.`);
 
     // --- Seed Imported Tenders ---
-
-    // --- Seed Imported Tenders ---
     const tenderCategories = ['Autoroute', 'National', 'Regional', 'Provincial'];
-    const roadClasses = ['Primary', 'Secondary'];
     const terrainTypes = ['Flat', 'Mixed', 'Coastal', 'Mountainous', 'Desert'];
     const soilTypes = ['Sandy', 'Clay', 'Rocky'];
     const slopeTypes = ['High', 'Moderate', 'Low'];
     const tenders = [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
+      const region = faker.random.arrayElement(MOROCCAN_REGIONS);
+      const city = faker.random.arrayElement(MOROCCAN_CITIES[region]);
+      const category = faker.random.arrayElement(tenderCategories);
+      const roadClass = category === 'Autoroute' || category === 'National' ? 'Primary' : 'Secondary';
+      
+      let lanes;
+      if (category === 'Autoroute') {
+        lanes = 4;
+      } else if (category === 'National') {
+        lanes = faker.random.arrayElement([2, 2, 2, 4]);
+      } else if (category === 'Regional') {
+        lanes = faker.random.arrayElement([1, 2]);
+      } else {
+        lanes = 1;
+      }
+
+      const roadWidth = lanes * 3.5;
+      const totalLengthKm = faker.datatype.number({ min: 5, max: 250 });
+      const terrain = faker.random.arrayElement(terrainTypes);
+      const slope = faker.random.arrayElement(slopeTypes);
+      const soil = faker.random.arrayElement(soilTypes);
+
+      // Calculate estimated budget realistically
+      const [baseMin, baseMax] = baseCostPerLane[category];
+      const baseCost = faker.datatype.float({ min: baseMin, max: baseMax });
+      let estimatedBudget = totalLengthKm * lanes * baseCost * terrainMultipliers[terrain] * slopeMultipliers[slope];
+      estimatedBudget = roundBudgetRealistically(estimatedBudget);
+
       const tender = await ImportedTender.create({
         source_id: faker.datatype.uuid(),
-        title: faker.company.catchPhrase(),
-        region: faker.address.state(),
-        province: faker.address.county(),
-        category: faker.random.arrayElement(tenderCategories),
-        road_class: faker.random.arrayElement(roadClasses),
-        total_length_km: faker.datatype.number({ min: 5, max: 100 }),
-        road_width_m: faker.datatype.number({ min: 5, max: 20 }),
-        lanes: faker.datatype.number({ min: 1, max: 4 }),
-        terrain_type: faker.random.arrayElement(terrainTypes),
-        soil_type: faker.random.arrayElement(soilTypes),
-        slope: faker.random.arrayElement(slopeTypes),
-        estimated_budget_MAD: faker.datatype.number({ min: 1_000_000, max: 50_000_000 }),
+        title: `Construction de ${category === 'Autoroute' ? 'l\'Autoroute' : 'la Route'} ${category} à ${city}`,
+        region: region,
+        province: city,
+        category: category,
+        road_class: roadClass,
+        total_length_km: totalLengthKm,
+        road_width_m: roadWidth,
+        lanes: lanes,
+        terrain_type: terrain,
+        soil_type: soil,
+        slope: slope,
+        estimated_budget_MAD: estimatedBudget,
         source_url: faker.internet.url()
       });
       tenders.push(tender);
     }
-
     console.log(`✅ Seeded ${tenders.length} imported tenders.`);
 
-
-
-
     // --- Seed Applications ---
-    const statuses = ['pending', 'approved', 'rejected'];
     const applications = [];
+    const nApplications = 200;
+    const fraudRatio = 0.3;
+    const nFraud = Math.floor(nApplications * fraudRatio);
 
-    for (let i = 0; i < 40; i++) {
-      const company = faker.random.arrayElement(companies);
-      const tender = faker.random.arrayElement(tenders);
-      const offered = faker.datatype.number({ min: 1_000_000, max: 60_000_000 });
-      const estimated = tender.estimated_budget_MAD;
-      const diff = ((offered - estimated) / estimated).toFixed(3);
+    // Track which companies have applied to which tenders
+    const companyTenderPairs = new Set();
+
+    for (let i = 0; i < nApplications; i++) {
+      const isFraud = i < nFraud;
+      let company, tender;
+      let pairKey;
+
+      // Ensure unique company-tender pair
+      do {
+        company = faker.random.arrayElement(companies);
+        tender = faker.random.arrayElement(tenders);
+        pairKey = `${company.id}-${tender.id}`;
+      } while (companyTenderPairs.has(pairKey));
+
+      companyTenderPairs.add(pairKey);
+
+      // Calculate offered budget based on fraud status
+      let offeredBudget;
+      if (isFraud) {
+        if (faker.datatype.boolean()) {
+          // Underbid
+          offeredBudget = tender.estimated_budget_MAD * faker.datatype.float({ min: 0.5, max: 0.7 });
+        } else {
+          // Overbid
+          offeredBudget = tender.estimated_budget_MAD * faker.datatype.float({ min: 1.3, max: 1.6 });
+        }
+      } else {
+        // Normal bid
+        offeredBudget = tender.estimated_budget_MAD * faker.datatype.float({ min: 0.9, max: 1.1 });
+      }
+      offeredBudget = roundBudgetRealistically(offeredBudget);
+
+      // Calculate financial score
+      const financialScore = Math.min(100, (tender.estimated_budget_MAD / offeredBudget) * 100);
+      
+      // Set technical score based on fraud status
+      const technicalScore = isFraud 
+        ? faker.datatype.float({ min: 30, max: 55, precision: 0.01 })
+        : faker.datatype.float({ min: 70, max: 100, precision: 0.01 });
+
+      // Calculate proposed duration
+      const proposedDuration = Math.round(tender.total_length_km * faker.datatype.float({ min: 2, max: 6 }));
 
       const application = await Application.create({
         tender_id: tender.id,
         company_id: company.id,
-        company_experience_years: faker.datatype.number({ min: 1, max: 30 }),
+        company_experience_years: company.experience || faker.datatype.number({ min: 1, max: 30 }),
         previous_similar_projects: company.previous_similar_projects,
         total_employees: company.total_employees,
         engineers_count: company.engineers_count,
         machinery_count: company.machinery_count,
-        offered_budget_MAD: offered,
-        estimated_budget_MAD: estimated,
-        budget_difference_ratio: parseFloat(diff),
-        proposed_duration_days: faker.datatype.number({ min: 30, max: 360 }),
-
+        offered_budget_MAD: offeredBudget,
+        estimated_budget_MAD: tender.estimated_budget_MAD,
+        budget_difference_ratio: (offeredBudget - tender.estimated_budget_MAD) / tender.estimated_budget_MAD,
+        proposed_duration_days: proposedDuration,
         total_length_km: tender.total_length_km,
         road_width_m: tender.road_width_m,
         lanes: tender.lanes,
@@ -107,18 +250,19 @@ async function seed() {
         terrain_type: tender.terrain_type,
         soil_type: tender.soil_type,
         slope: tender.slope,
-
-        compliance_issues_count: company.compliance_issues_count,
-        technical_score: parseFloat(faker.datatype.float({ min: 50, max: 100 }).toFixed(2)),
-        financial_score: parseFloat(faker.datatype.float({ min: 50, max: 100 }).toFixed(2)),
-        status: faker.random.arrayElement(statuses),
-        is_fraud: null,
+        compliance_issues_count: isFraud 
+          ? faker.datatype.number({ min: 2, max: 3 })
+          : faker.datatype.number({ min: 0, max: 1, precision: 1 }),
+        technical_score: technicalScore,
+        financial_score: parseFloat(financialScore.toFixed(2)),
+        status: faker.random.arrayElement(['pending', 'approved', 'rejected']),
+        is_fraud: isFraud
       });
 
       applications.push(application);
     }
 
-    console.log(`✅ Seeded ${applications.length} applications.`);
+    console.log(`✅ Seeded ${applications.length} applications (${nFraud} fraudulent).`);
 
     await sequelize.close();
     console.log('🌱 Seeding complete. Database connection closed.');

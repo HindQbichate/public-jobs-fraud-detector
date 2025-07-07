@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Info, BarChart2 } from "lucide-react"; // Added BarChart2 icon
+import { Info, BarChart2 } from "lucide-react";
+import axios from "../../utils/axiosConfig";
 
 type Company = { id: number; name: string };
 
@@ -14,6 +15,10 @@ type TenderInfo = {
   terrain_type: string;
   soil_type: string;
   slope: string;
+};
+
+type Prediction = {
+  result: "Fraudulent" | "Legitimate" | null;
 };
 
 type Application = {
@@ -32,7 +37,11 @@ type Application = {
   status: string;
   technical_score: number;
   financial_score: number;
+  compliance_issues_count: number;
+  is_fraud: boolean | null;
   Company: Company;
+  ImportedTender: TenderInfo;
+  Prediction: Prediction;
 };
 
 type TenderGroup = {
@@ -49,14 +58,8 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
   const [openTenderIds, setOpenTenderIds] = useState<number[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedTender, setSelectedTender] = useState<TenderInfo | null>(null);
+  const [loadingPredictions, setLoadingPredictions] = useState<Record<number, boolean>>({});
   const [predictions, setPredictions] = useState<Record<number, string>>({});
-  const [predictionDetails, setPredictionDetails] = useState<{
-    appId: number;
-    companyName: string;
-    result: string;
-    confidence: number;
-    factors: string[];
-  } | null>(null);
 
   const toggleTender = (id: number) => {
     setOpenTenderIds((prev) =>
@@ -69,46 +72,29 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
     setShowModal(true);
   };
 
-  const runPrediction = (appId: number, companyName: string) => {
-    // Simulate prediction logic - in real app this would be an API call
-    const results = ["Faible risque", "Risque modéré", "Haut risque"];
-    const randomResult = results[Math.floor(Math.random() * results.length)];
-    const confidence = Math.floor(Math.random() * 40) + 60; // 60-99%
-    
-    const riskFactors = [
-      "Expérience insuffisante",
-      "Écart budgétaire important",
-      "Délai trop court",
-      "Capacité technique limitée",
-      "Problèmes financiers antérieurs"
-    ];
-    
-    // Select 1-3 random risk factors
-    const selectedFactors = [];
-    const factorCount = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < factorCount; i++) {
-      const randomIndex = Math.floor(Math.random() * riskFactors.length);
-      if (!selectedFactors.includes(riskFactors[randomIndex])) {
-        selectedFactors.push(riskFactors[randomIndex]);
-      }
+  const runPrediction = async (application: Application) => {
+    setLoadingPredictions(prev => ({ ...prev, [application.id]: true }));
+
+    try {
+      const response = await axios.post("/api/predictions/predict", {
+        ...application,
+        ...application.ImportedTender
+      });
+
+      // Update the predictions state with the new result
+      setPredictions(prev => ({
+        ...prev,
+        [application.id]: response.data.result
+      }));
+    } catch (error) {
+      console.error("Prediction failed:", error);
+      setPredictions(prev => ({
+        ...prev,
+        [application.id]: "Error"
+      }));
+    } finally {
+      setLoadingPredictions(prev => ({ ...prev, [application.id]: false }));
     }
-
-    setPredictions(prev => ({
-      ...prev,
-      [appId]: randomResult
-    }));
-
-    setPredictionDetails({
-      appId,
-      companyName,
-      result: randomResult,
-      confidence,
-      factors: selectedFactors
-    });
-  };
-
-  const closePredictionDetails = () => {
-    setPredictionDetails(null);
   };
 
   return (
@@ -124,10 +110,10 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
                 className="cursor-pointer hover:underline flex-1"
               >
                 <h2 className="text-lg font-semibold text-gray-700">
-                  Tender #{tender.tender_id} – {tender.tender_info.category} in{" "}
+                  Tender #{tender.tender_id} – {tender.tender_info.category}{" "}
                   {tender.tender_info.province}, {tender.tender_info.region}{" "}
                   <span className="text-sm text-blue-500 ml-2">
-                    {isOpen ? "▲ Masquer" : "▼ Afficher"}
+                    {isOpen ? "▲ Hide" : "▼ Show"}
                   </span>
                 </h2>
               </div>
@@ -135,7 +121,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
               <button
                 onClick={() => openTenderDetails(tender.tender_info)}
                 className="text-gray-600 hover:text-blue-600 ml-4"
-                title="Informations"
+                title="Details"
               >
                 <Info size={18} />
               </button>
@@ -159,10 +145,8 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
                       <th className="px-4 py-2">Tech Score</th>
                       <th className="px-4 py-2">Fin Score</th>
                       <th className="px-4 py-2">Status</th>
-                      {/* Added Actions column */}
                       <th className="px-4 py-2">Actions</th>
-                      {/* Added Prediction column */}
-                      <th className="px-4 py-2">Prediction (Result)</th>
+                      <th className="px-4 py-2">Prediction</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -185,30 +169,45 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
                         <td className={`px-4 py-2 capitalize ${app.status === "approved" ? "text-green-600" : app.status === "pending" ? "text-yellow-600" : "text-red-600"}`}>
                           {app.status}
                         </td>
-                        {/* Actions Column */}
                         <td className="px-4 py-2">
                           <button
-                            onClick={() => runPrediction(app.id, app.Company.name)}
-                            className="flex items-center text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md transition-colors"
+                            onClick={() => runPrediction(app)}
+                            disabled={loadingPredictions[app.id]}
+                            className={`flex items-center text-xs ${
+                              loadingPredictions[app.id]
+                                ? "bg-gray-400 cursor-not-allowed" 
+                                : "bg-blue-500 hover:bg-blue-600"
+                            } text-white px-2 py-1 rounded-md transition-colors`}
                           >
                             <BarChart2 size={14} className="mr-1" />
-                            Lancer prédiction
+                            {loadingPredictions[app.id] ? "Processing..." : "Predict"}
                           </button>
                         </td>
-                        {/* Prediction Result Column */}
                         <td className="px-4 py-2">
-                          {predictions[app.id] && (
+                          {loadingPredictions[app.id] ? (
+                            <span className="text-gray-500">Loading...</span>
+                          ) : predictions[app.id] ? (
                             <span 
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                predictions[app.id] === "Faible risque" 
-                                  ? "bg-green-100 text-green-800" 
-                                  : predictions[app.id] === "Risque modéré" 
-                                    ? "bg-yellow-100 text-yellow-800" 
-                                    : "bg-red-100 text-red-800"
+                                predictions[app.id] === "Fraudulent" 
+                                  ? "bg-red-100 text-red-800" 
+                                  : "bg-green-100 text-green-800"
                               }`}
                             >
                               {predictions[app.id]}
                             </span>
+                          ) : app.Prediction?.result ? (
+                            <span 
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                app.Prediction.result === "Fraudulent" 
+                                  ? "bg-red-100 text-red-800" 
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {app.Prediction.result}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">Not predicted</span>
                           )}
                         </td>
                       </tr>
@@ -225,78 +224,25 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ tenders }) => {
       {showModal && selectedTender && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Détails du Marché</h3>
+            <h3 className="text-lg font-bold mb-4">Tender Details</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li><strong>Catégorie :</strong> {selectedTender.category}</li>
-              <li><strong>Classe de route :</strong> {selectedTender.road_class}</li>
-              <li><strong>Longueur totale :</strong> {selectedTender.total_length_km} km</li>
-              <li><strong>Largeur de route :</strong> {selectedTender.road_width_m} m</li>
-              <li><strong>Nombre de voies :</strong> {selectedTender.lanes}</li>
-              <li><strong>Type de terrain :</strong> {selectedTender.terrain_type}</li>
-              <li><strong>Type de sol :</strong> {selectedTender.soil_type}</li>
-              <li><strong>Pente :</strong> {selectedTender.slope}</li>
-              <li><strong>Province :</strong> {selectedTender.province}</li>
-              <li><strong>Région :</strong> {selectedTender.region}</li>
+              <li><strong>Category:</strong> {selectedTender.category}</li>
+              <li><strong>Road Class:</strong> {selectedTender.road_class}</li>
+              <li><strong>Total Length:</strong> {selectedTender.total_length_km} km</li>
+              <li><strong>Road Width:</strong> {selectedTender.road_width_m} m</li>
+              <li><strong>Lanes:</strong> {selectedTender.lanes}</li>
+              <li><strong>Terrain Type:</strong> {selectedTender.terrain_type}</li>
+              <li><strong>Soil Type:</strong> {selectedTender.soil_type}</li>
+              <li><strong>Slope:</strong> {selectedTender.slope}</li>
+              <li><strong>Province:</strong> {selectedTender.province}</li>
+              <li><strong>Region:</strong> {selectedTender.region}</li>
             </ul>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Prediction Details Modal */}
-      {predictionDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">
-              Détails de la prédiction - {predictionDetails.companyName}
-            </h3>
-            
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <strong>Résultat:</strong>
-                <span 
-                  className={`px-2 py-1 rounded-full text-sm ${
-                    predictionDetails.result === "Faible risque" 
-                      ? "bg-green-100 text-green-800" 
-                      : predictionDetails.result === "Risque modéré" 
-                        ? "bg-yellow-100 text-yellow-800" 
-                        : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {predictionDetails.result}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <strong>Confiance:</strong>
-                <span>{predictionDetails.confidence}%</span>
-              </div>
-            </div>
-            
-            {predictionDetails.factors.length > 0 && (
-              <div className="mb-4">
-                <strong className="block mb-2">Facteurs de risque:</strong>
-                <ul className="list-disc pl-5 text-sm">
-                  {predictionDetails.factors.map((factor, index) => (
-                    <li key={index} className="text-red-600">{factor}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={closePredictionDetails}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Fermer
+                Close
               </button>
             </div>
           </div>

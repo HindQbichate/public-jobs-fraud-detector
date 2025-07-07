@@ -1,4 +1,4 @@
-const { Prediction } = require('../models');
+const { Prediction,User,Application,Company,ImportedTender  } = require('../models');
 const { sanitizeForModel } = require('../services/predictionProcessor');
 
 const sendPredictionRequest = require('../kafka/kafkaProducer');
@@ -27,6 +27,7 @@ exports.predictFraud = async (req, res) => {
       try {
         await Prediction.create({
           application_id: response.application_id,
+          user_id: req.user.id,
           prediction: response.prediction,
           result: response.result
         });
@@ -64,22 +65,53 @@ exports.predictFraud = async (req, res) => {
 // ➕ Create a new prediction record manually
 exports.createPrediction = async (req, res) => {
   try {
-    const prediction = await Prediction.create(req.body);
-    res.status(201).json(prediction);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const { application_id, prediction, result } = req.body;
+
+    console.log("user:"+req.user) 
+    const newPrediction = await Prediction.create({
+      application_id,
+      user_id: req.user.id, // Assuming you have user info in req.user
+      prediction,
+      result
+    });
+
+    res.status(201).json(newPrediction);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
 // 📄 Get all predictions
 exports.getAllPredictions = async (req, res) => {
   try {
-    const predictions = await Prediction.findAll();
+    const predictions = await Prediction.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email', 'role']
+        },
+        {
+          model: Application,
+          attributes: ['id', 'offered_budget_MAD', 'estimated_budget_MAD'],
+          include: [
+            {
+              model: Company,
+              attributes: ['id', 'name']
+            },
+            {
+              model: ImportedTender,
+              attributes: ['id', 'region', 'province', 'category', 'road_class', 'terrain_type', 'soil_type', 'slope']
+            }
+          ]
+        }
+      ]
+    });
     res.json(predictions);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // 🔍 Get a specific prediction by ID
 exports.getPredictionById = async (req, res) => {

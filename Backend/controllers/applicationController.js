@@ -1,4 +1,4 @@
-const { Application, Company, ImportedTender } = require('../models');
+const { Application, Company, ImportedTender, Prediction } = require('../models');
 
 exports.createApplication = async (req, res) => {
   try {
@@ -40,6 +40,10 @@ exports.getAllApplications = async (req, res) => {
         {
           model: ImportedTender, // this should be properly associated
           attributes: ['region', 'province', 'category','total_length_km','road_width_m','lanes','road_class','terrain_type','soil_type','slope']
+        },
+        {
+          model:Prediction,
+          attributes: ['result']
         }
       ]
     });
