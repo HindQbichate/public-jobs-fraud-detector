@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const applicationController = require('../controllers/applicationController');
+const {seed} = require('../controllers/seed');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 
 /**
@@ -203,4 +204,11 @@ router.put('/:id', authenticateToken, applicationController.updateApplication);
  */
 router.delete('/:id', authenticateToken, applicationController.deleteApplication);
 
+
+
+router.post('/seed-applications', seed);
+
+
 module.exports = router;
+
+

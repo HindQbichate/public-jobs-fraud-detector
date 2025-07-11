@@ -7,5 +7,5 @@ router.use('/tenders', require('./importedTenderRoutes'));
 router.use('/applications', require('./applicationRoutes'));
 router.use('/predictions', require('./predictionRoutes'));
 router.use('/companies', require('./companyRoutes'));
-
+router.use('/analytics', require('./analyticsRoutes'));
 module.exports = router;

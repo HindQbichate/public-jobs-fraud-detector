@@ -18,7 +18,7 @@ const groupByTenderId = (apps) => {
     if (!grouped[tenderId]) {
       grouped[tenderId] = {
         tender_id: tenderId,
-        tender_info: app.ImportedTender, // same for all apps with same tender_id
+        tender_info: app.ImportedTender,
         applications: []
       };
     }
@@ -26,7 +26,11 @@ const groupByTenderId = (apps) => {
     grouped[tenderId].applications.push(app);
   }
 
-  return Object.values(grouped);
+  return Object.values(grouped).sort((a, b) => {
+    const dateA = new Date(a.tender_info.createdAt);
+    const dateB = new Date(b.tender_info.createdAt);
+    return dateB - dateA; 
+  });
 };
 
 exports.getAllApplications = async (req, res) => {
@@ -38,14 +42,16 @@ exports.getAllApplications = async (req, res) => {
           attributes: ['id', 'name']
         },
         {
-          model: ImportedTender, // this should be properly associated
-          attributes: ['region', 'province', 'category','total_length_km','road_width_m','lanes','road_class','terrain_type','soil_type','slope']
+          model: ImportedTender,
+          attributes: ['region', 'province', 'category', 'total_length_km', 'road_width_m', 'lanes', 'road_class', 'terrain_type', 'soil_type', 'slope']
         },
         {
-          model:Prediction,
+          model: Prediction,
           attributes: ['result']
         }
-      ]
+      ],
+      order: [['createdAt', 'DESC']], 
+
     });
 
     const grouped = groupByTenderId(apps);
