@@ -2,7 +2,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000/api/auth";
+const API = import.meta.env.VITE_API_URL+"/api/auth";
 
 export type DecodedToken = {
   id: number;

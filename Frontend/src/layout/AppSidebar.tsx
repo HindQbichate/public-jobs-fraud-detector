@@ -24,11 +24,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Accueil", path: "/", pro: false }],
-  },
+  // {
+  //   icon: <GridIcon />,
+  //   name: "Dashboard",
+  //   subItems: [{ name: "Accueil", path: "/", pro: false }],
+  // },
   {
     icon: <UserCircleIcon />,
     name: "Utilisateurs",

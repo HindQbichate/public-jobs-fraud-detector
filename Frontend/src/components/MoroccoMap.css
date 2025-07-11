@@ -1,0 +1,73 @@
+.map-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tooltip {
+  position: fixed;
+  background-color: white;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #2d3748;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+  min-width: 200px;
+  transition: opacity 0.2s ease;
+  opacity: 0.95;
+}
+
+.tooltip-header {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #1a202c;
+  font-family: "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+.tooltip-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+.tooltip-line span:first-child {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.tooltip-line span:last-child {
+  font-weight: 600;
+}
+
+.tooltip .high {
+  color: #e53e3e; /* red-600 */
+}
+
+.tooltip .low {
+  color: #38a169; /* green-500 */
+}
+
+/* Optional: Responsive fix */
+@media (max-width: 600px) {
+  .tooltip {
+    font-size: 13px;
+    min-width: 170px;
+    padding: 10px 12px;
+  }
+}
+
+.land.hovered {
+    stroke: #000;
+    stroke-width: 2;
+    filter: brightness(1.15);
+    cursor: pointer;
+}

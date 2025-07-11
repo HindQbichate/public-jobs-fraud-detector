@@ -2,8 +2,10 @@
 import axios from "axios";
 import { getToken } from "../services/authService";
 
+const apiURL = import.meta.env.VITE_API_URL;
+
 const instance = axios.create({
-  baseURL: "http://localhost:4000/",
+  baseURL: apiURL,
 });
 
 instance.interceptors.request.use((config) => {

@@ -161,8 +161,9 @@ function UserFormFields({
           onChange={(e) => setForm({ ...form, role: e.target.value })}
           className="w-full px-4 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         >
-          <option value="contractor">Contractor</option>
           <option value="admin">Admin</option>
+          <option value="consultant">Consultant</option>
+          <option value="analyste">Analyst</option>
         </select>
       </div>
     </>

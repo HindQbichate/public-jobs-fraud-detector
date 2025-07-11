@@ -22,6 +22,7 @@ import Users from "./pages/Users"
 import Applications from "./pages/Applications"
 import Predictions from "./pages/Predictions";
 import PageMeta from "./components/common/PageMeta";
+import Analytics from "./pages/Analytics";
 
 
 export default function App() {
@@ -29,28 +30,19 @@ export default function App() {
     <>
 
       <PageMeta
-        title="You know"
+        title="Budget Watch"
         description="This is React.js Blank Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
       />
       <Routes>
         {/* Layout protégé */}
         <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
           <Route index path="/" element={<Home />} />
-          <Route path="/profile" element={<UserProfiles />} />
+     
           <Route path="/users" element={<Users />} />
           <Route path="/applications" element={<Applications />} />
           <Route path="/predictions" element={<Predictions />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/blank" element={<Blank />} />
-          <Route path="/form-elements" element={<FormElements />} />
-          <Route path="/alerts" element={<Alerts />} />
-          <Route path="/avatars" element={<Avatars />} />
-          <Route path="/badge" element={<Badges />} />
-          <Route path="/buttons" element={<Buttons />} />
-          <Route path="/images" element={<Images />} />
-          <Route path="/videos" element={<Videos />} />
-          <Route path="/line-chart" element={<LineChart />} />
-          <Route path="/bar-chart" element={<BarChart />} />
+          <Route path="/analytics" element={<Analytics />} />
+        
         </Route>
 
         {/* Auth routes (public) */}
