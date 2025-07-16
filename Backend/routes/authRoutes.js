@@ -24,7 +24,7 @@ const authController = require('../controllers/authController');
  *                 example: "StrongPassword123"
  *               fullName:
  *                 type: string
- *                 example: "Hiba Qbichate"
+ *                 example: "hind Qbichate"
  *               role:
  *                 type: string
  *                 example: "user"
